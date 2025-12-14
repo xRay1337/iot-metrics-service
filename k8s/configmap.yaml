@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: iot-metrics-config
+  namespace: iot-metrics
+data:
+  REDIS_ADDR: "redis-master.iot-metrics.svc.cluster.local:6379"
+  PORT: "8080"
+  LOG_LEVEL: "info"
+  WINDOW_SIZE: "50"
+  ANOMALY_THRESHOLD: "2.0"
+  BUFFER_MAX_SIZE: "1000"

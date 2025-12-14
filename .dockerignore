@@ -1,0 +1,17 @@
+.git
+.gitignore
+README.md
+*.log
+tmp/
+vendor/
+bin/
+dist/
+*.test
+*.out
+.DS_Store
+.env.local
+docker-compose.override.yml
+node_modules/
+*.db
+*.sqlite
+__pycache__

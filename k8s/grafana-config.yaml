@@ -1,0 +1,90 @@
+# k8s/grafana-config.yaml
+---
+# 1. Grafana DataSources ConfigMap
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-datasources
+  namespace: iot-metrics
+data:
+  prometheus.yaml: |
+    apiVersion: 1
+    datasources:
+    - name: Prometheus
+      type: prometheus
+      access: proxy
+      url: http://prometheus.iot-metrics.svc.cluster.local:9090
+      isDefault: true
+---
+# 2. Grafana Dashboards ConfigMap
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-dashboards
+  namespace: iot-metrics
+data:
+  iot-dashboard.json: |
+    {
+      "title": "IoT Metrics Dashboard",
+      "tags": ["iot"],
+      "timezone": "browser",
+      "panels": [
+        {
+          "id": 1,
+          "title": "Requests per Second",
+          "type": "graph",
+          "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0},
+          "targets": [
+            {
+              "expr": "rate(iot_requests_total[1m])",
+              "legendFormat": "{{endpoint}}",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "id": 2,
+          "title": "Anomalies Detected",
+          "type": "stat",
+          "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0},
+          "targets": [
+            {
+              "expr": "increase(iot_anomalies_detected_total[5m])",
+              "instant": true,
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "id": 3,
+          "title": "CPU Usage (Last Metric)",
+          "type": "gauge",
+          "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8},
+          "targets": [
+            {
+              "expr": "iot_current_rps",
+              "format": "time_series",
+              "instant": true,
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "id": 4,
+          "title": "Latency (95th percentile)",
+          "type": "graph",
+          "gridPos": {"h": 8, "w": 12, "x": 12, "y": 8},
+          "targets": [
+            {
+              "expr": "histogram_quantile(0.95, sum(rate(iot_request_duration_seconds_bucket[5m])) by (le, endpoint))",
+              "legendFormat": "{{endpoint}}",
+              "refId": "A"
+            }
+          ]
+        }
+      ],
+      "time": {
+        "from": "now-1h",
+        "to": "now"
+      }
+    }

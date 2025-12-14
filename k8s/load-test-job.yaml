@@ -1,0 +1,51 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: load-test-job
+  namespace: iot-metrics
+spec:
+  completions: 1
+  parallelism: 1
+  template:
+    spec:
+      containers:
+      - name: load-test
+        image: python:3.9-slim
+        command: ["/bin/sh", "-c"]
+        args:
+        - |
+          apt-get update && apt-get install -y curl &&
+          pip install aiohttp requests &&
+          cat > load_test.py << 'EOF'
+          import asyncio
+          import aiohttp
+          import random
+          import time
+          
+          async def test():
+              url = "http://iot-metrics-service.iot-metrics.svc.cluster.local:8080/api/metrics"
+              async with aiohttp.ClientSession() as session:
+                  for i in range(1000):
+                      data = {
+                          "timestamp": int(time.time()),
+                          "device_id": f"k8s-device-{random.randint(1, 100)}",
+                          "cpu": random.uniform(10, 90),
+                          "rps": random.uniform(500, 2000),
+                          "memory": random.uniform(30, 95)
+                      }
+                      async with session.post(url, json=data) as resp:
+                          if i % 100 == 0:
+                              print(f"Sent {i} requests")
+                      await asyncio.sleep(0.001)
+          
+          asyncio.run(test())
+          EOF
+          python load_test.py
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "256Mi"
+            cpu: "200m"
+      restartPolicy: Never
